@@ -72,9 +72,11 @@ STATIC void machine_timer_print(const mp_print_t *print, mp_obj_t self_in, mp_pr
 
     timer_get_config(self->group, self->index, &config);
 
-    mp_printf(print, "alarm_en=%d ", config.alarm_en);
-    mp_printf(print, "auto_reload=%d ", config.auto_reload);
-    mp_printf(print, "counter_en=%d ", config.counter_en);
+    mp_printf(print, "index=%d", 2*self->group+self->index);
+    mp_printf(print, " alarm_en=%d", config.alarm_en);
+    mp_printf(print, " auto_reload=%d", config.auto_reload);
+    mp_printf(print, " counter_en=%d", config.counter_en);
+    mp_printf(print, " handle=%x", self->handle);
     mp_printf(print, "]");
 }
 
@@ -91,8 +93,10 @@ STATIC mp_obj_t machine_timer_make_new(const mp_obj_type_t *type, size_t n_args,
 
 STATIC void machine_timer_disable(machine_timer_obj_t *self) {
     if (self->handle) {
-        timer_pause(self->group, self->index);
-        esp_intr_free(self->handle);
+        check_esp_err(timer_pause(self->group, self->index));
+        check_esp_err(timer_disable_intr(self->group, self->index));
+        check_esp_err(esp_intr_free(self->handle));
+
         self->handle = NULL;
     }
 }
